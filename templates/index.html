@@ -1,1 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Praveen</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary-color: #4a00e0;
+            --secondary-color: #8e2de2;
+            --text-color: #ffffff;
+            --bg-color: #120038;
+            --input-bg: rgba(255, 255, 255, 0.1);
+            --input-border: rgba(255, 255, 255, 0.3);
+            --option-bg: #2a0080;
+            --option-hover-bg: #3a00b0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--bg-color), var(--primary-color));
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--text-color);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        textarea, select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid var(--input-border);
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 2px rgba(142, 45, 226, 0.4);
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 40px;
+            cursor: pointer;
+        }
+
+        /* Styling for dropdown options */
+        select option {
+            background-color: var(--option-bg);
+            color: var(--text-color);
+            padding: 12px;
+        }
+
+        select option:hover, select option:focus, select option:active {
+            background-color: var(--option-hover-bg);
+        }
+
+        /* Custom dropdown styling for better visibility */
+        select::-ms-expand {
+            display: none;
+        }
+
+        select:hover, select:focus {
+            border-color: var(--secondary-color);
+        }
+
+        /* Ensure text is visible when option is selected */
+        select, select option:checked {
+            color: var(--text-color);
+        }
+
+        button {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: var(--text-color);
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(142, 45, 226, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #translated-text {
+            margin-top: 30px;
+            background-color: var(--input-bg);
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 100px;
+            border: 2px solid var(--input-border);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Language Translator</h1>
+        <form id="translator-form" method="post" action="/translate">
+            <div>
+                <label for="text">Text to Translate:</label>
+                <textarea name="text" id="text" rows="4" required placeholder="Enter your text here..."></textarea>
+            </div>
+
+            <div>
+                <label for="target_language">Select Target Language:</label>
+                <select name="target_language" id="target_language" required>
+                    {% for lang_code, lang_name in languages.items() %}
+                        <option value="{{ lang_code }}">{{ lang_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit">Translate</button>
+        </form>
+
+        <div id="translated-text"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('translator-form');
+        const translatedTextElement = document.getElementById('translated-text');
+
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            const submitButton = form.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Translating...';
+
+            try {
+                const response = await fetch('/translate', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (result.translated_text) {
+                    translatedTextElement.textContent = result.translated_text;
+                    translatedTextElement.style.animation = 'fadeIn 0.5s';
+                } else {
+                    translatedTextElement.textContent = result.error || 'An error occurred';
+                    translatedTextElement.style.color = '#ff6b6b';
+                }
+            } catch (error) {
+                translatedTextElement.textContent = 'An error occurred while translating. Please try again.';
+                translatedTextElement.style.color = '#ff6b6b';
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Translate';
+            }
+        });
+
+        // Add fade-in animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
+
 
